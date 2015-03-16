@@ -32,38 +32,32 @@ mdcc.server.0.2=[???]:9092
 
 mdcc.app.server=localhost:9190
 
-and the content of <mdcc.properties> as follows
+and the content of mdcc.properties as follows
 
 mdcc.server.0=localhost:9090
 mdcc.server.1=localhost:9091
 mdcc.server.2=localhost:9092
 
-and the content of <tpcc.properties> as follows
+and the content of tpcc.properties as follows
 warehouse=1
 runtime=60
 
 Start StorageNode
 ---
-	start the first node 	<StorageNode.java> on port 	9090	i.e. mdcc.my.id = 0
-	start the second node 	<StorageNode.java> on port 	9091	i.e. mdcc.my.id = 1
-	start the third node 	<StorageNode.java> on port 	9092	i.e. mdcc.my.id = 2
-
-	给每个节点起Server mdcc.my.id 来表示起哪个节点(local)
+Modify the mdcc.properities on each node
+tpcc loader program will automatically start
 
 	$ java -classpath core/target/mdcc-tpcc-1.0.jar:lib/* edu.ucsb.cs.mdcc.paxos.StorageNode
 
+	start the first node 	<StorageNode.java> on port 	9090	i.e. mdcc.my.id = 0
+	start the second node 	<StorageNode.java> on port 	9091	i.e. mdcc.my.id = 1
+	start the third node 	<StorageNode.java> on port 	9092	i.e. mdcc.my.id = 2
 	
 Start appServer
 ---
 	$ java -classpath core/target/mdcc-tpcc-1.0.jar:lib/* edu.ucsb.cs.mdcc.paxos.AppServer
-
-Run <StorageNode.java>
----
-For each node, modify mdcc.properities file, and
-
-	$ java -classpath core/target/mdcc-tpcc-1.0.jar:lib/* edu.ucsb.cs.mdcc.paxos.StorageNode
 	
-Run <TPCCTest.java>
+Run TPCCTest.java
 ---
 Modify tpcc.properities file, and
 
