@@ -21,7 +21,7 @@ $ bin/zkServer.sh start zk2.cfg
 For node 3,
 $ bin/zkServer.sh start zk3.cfg
 
-1. AppServer/Storage configure
+AppServer/Storage configure
 ---
 For example:
 If we have, the content of <app-server.properties> as follows
