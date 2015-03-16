@@ -1,8 +1,9 @@
 How to run TPCC benchmark in MDCC System on three nodes.
 ======
-1. Zookeeper configure
+Zookeeper configure
 ---
-copy zk0.cfg/zk1.cfg/zk2.cfg in the conf folder, modify configuration of zookeeper
+Download Apache ZooKeeper.
+Copy zk0.cfg/zk1.cfg/zk2.cfg in the conf folder, modify configuration of zookeeper.
 
 	tickTime=2000
 	clientPort=30110
@@ -54,11 +55,11 @@ Start StorageNode
 	
 Start appServer
 ---
-java -classpath core/target/mdcc-tpcc-1.0.jar:lib/* edu.ucsb.cs.mdcc.paxos.AppServer
+	$ java -classpath core/target/mdcc-tpcc-1.0.jar:lib/* edu.ucsb.cs.mdcc.paxos.AppServer
 
 Run <TPCCTest.java>
 ---
-java -classpath core/target/mdcc-tpcc-1.0.jar:lib/* edu.ucsb.cs.mdcc.paxos.StorageNode
+	$ java -classpath core/target/mdcc-tpcc-1.0.jar:lib/* edu.ucsb.cs.mdcc.paxos.StorageNode
 [time in seconds] 在tpcc.properties 里面设置 单位是秒
 [number of warehouses] 在tpcc.properties 里面设置 单位是个
 warehouse=1
