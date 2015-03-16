@@ -73,4 +73,33 @@ public class MDCCCommunicationServiceHandler implements Iface {
                 toPaxosBallot(a.getBallot()), a.getKey(), a.getOldVersion(),
                 a.getNewValue());
     }
+
+    //------------------------------
+	@Override
+	public Map<String, ReadValue> read2(String table, String key,
+			List<String> columns) throws TException {
+		return agent.onRead(table, key, columns);
+	}
+
+	@Override
+	public List<Map<String, ReadValue>> read3(String table, String key_prefix,
+			List<String> columns, String constraintColumn,
+			String constraintValue, String orderColumn, boolean isAssending)
+			throws TException {
+		return agent.onRead(table, key_prefix, columns, constraintColumn, constraintValue, orderColumn, isAssending);
+	}
+
+	@Override
+	public List<ReadValue> read4(String table, String key_prefix,
+			String projectionColumn, String constraintColumn, int lowerBound,
+			int upperBound) throws TException {
+		return agent.onRead(table, key_prefix, projectionColumn, constraintColumn, lowerBound, upperBound);
+	}
+
+	@Override
+	public int read5(String table, String key_prefix, String constraintColumn,
+			int lowerBound, int upperBound) throws TException {
+		return agent.onRead(table, key_prefix, constraintColumn, lowerBound, upperBound);
+	}
+    //------------------------------
 }

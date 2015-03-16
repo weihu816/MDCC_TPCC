@@ -1,6 +1,11 @@
 package edu.ucsb.cs.mdcc.paxos;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -12,6 +17,7 @@ import edu.ucsb.cs.mdcc.messaging.AppServerServiceHandler;
 import edu.ucsb.cs.mdcc.messaging.MDCCAppServerService;
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicator;
 import edu.ucsb.cs.mdcc.messaging.ReadValue;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.thrift.server.TNonblockingServer;
@@ -88,8 +94,7 @@ public class AppServer implements AppServerService {
         }
 
         if (!success && log.isDebugEnabled()) {
-            log.debug("Expected accepts: " + options.size() +
-                    "; Received accepts: " + voteListener.getAccepts());
+            log.debug("Expected accepts: " + options.size() + "; Received accepts: " + voteListener.getAccepts());
         }
         return success;
 	}
@@ -140,5 +145,103 @@ public class AppServer implements AppServerService {
 		});
 		server.startListener();
 	}
+
+	//------------------------------
+	@Override
+	public Map<String, Result> read(String table, String column,
+			List<String> columns) {
+		Member[] members = configuration.getMembers(table);//TODO
+        Map<String, ReadValue> r = null;
+        int memberIndex = 0;
+        while (r == null && memberIndex < members.length) {
+        	r = communicator.get(members[memberIndex], table, column, columns);
+            memberIndex++;
+        }
+		if (r == null) {
+			return new HashMap<String, Result>();
+		} else {
+			Map<String, Result> ret = new HashMap<String, Result>();
+			for (Entry<String, ReadValue> e : r.entrySet()) {
+				ReadValue readValue = e.getValue();
+				boolean classic = readValue.getClassicEndVersion() >= readValue.getVersion();
+				Result result = new Result(readValue.getKey(),
+						readValue.getValue(), readValue.getVersion(), classic);
+				ret.put(e.getKey(), result);
+			}
+			return ret;
+		}
+	}
+
+	@Override
+	public List<Map<String, Result>> read(String table, String key_prefix,
+			List<String> columns, String constraintColumn,
+			String constraintValue, String orderColumn, boolean isAssending) {
+		Member[] members = configuration.getMembers(table);//TODO
+        List<Map<String, ReadValue>> r = null;
+        int memberIndex = 0;
+        while (r == null && memberIndex < members.length) {
+			r = communicator.get(members[memberIndex], table, key_prefix,
+					columns, constraintColumn, constraintValue, orderColumn,
+					isAssending);
+            memberIndex++;
+        }
+		if (r == null) {
+			return new ArrayList<Map<String, Result>>();
+        } else {
+        	List<Map<String, Result>> ret = new ArrayList<Map<String, Result>>();
+        	for (Map<String, ReadValue> m : r) {
+        		Map<String, Result> ret_ = new HashMap<String, Result>();
+        		for (Entry<String, ReadValue> e : m.entrySet()) {
+        			ReadValue readValue = e.getValue();
+        			boolean classic = readValue.getClassicEndVersion() >= readValue.getVersion();
+					Result result = new Result(readValue.getKey(),
+							readValue.getValue(), readValue.getVersion(),
+							classic);
+					ret_.put(e.getKey(), result);
+        		}
+        		ret.add(ret_);
+        	}
+            return ret;
+		}
+	}
+
+	@Override
+	public List<Result> read(String table, String key_prefix,
+			String projectionColumn, String constraintColumn, int lowerBound,
+			int upperBound) {
+		Member[] members = configuration.getMembers(table);//TODO
+        List<ReadValue> r = null;
+        int memberIndex = 0;
+        while (r == null && memberIndex < members.length) {
+        	r = communicator.get(members[memberIndex], table, key_prefix, projectionColumn, constraintColumn, lowerBound, upperBound);
+            memberIndex++;
+        }
+		if (r == null) {
+			return new ArrayList<Result>();
+        } else {
+        	List<Result> ret = new ArrayList<Result>();
+        	for (ReadValue readValue : r) {
+        		boolean classic = readValue.getClassicEndVersion() >= readValue.getVersion();
+				Result result = new Result(readValue.getKey(),
+						readValue.getValue(), readValue.getVersion(), classic);
+				ret.add(result);
+        	}
+            return ret;
+		}
+	}
+
+	@Override
+	public int read(String table, String key_prefix, String constraintColumn,
+			int lowerBound, int upperBound) {
+		Member[] members = configuration.getMembers(table);//TODO
+        Integer r = null;
+        int memberIndex = 0;
+        while (r == null && memberIndex < members.length) {
+        	r = communicator.get(members[memberIndex], table, key_prefix, constraintColumn, lowerBound, upperBound);
+            memberIndex++;
+        }
+        return r;
+	}
+	//------------------------------
 
 }

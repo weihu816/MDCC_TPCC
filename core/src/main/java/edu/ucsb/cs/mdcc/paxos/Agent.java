@@ -1,12 +1,12 @@
 package edu.ucsb.cs.mdcc.paxos;
 
 import edu.ucsb.cs.mdcc.MDCCException;
-
+import edu.ucsb.cs.mdcc.config.AppServerConfiguration;
 import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
 import edu.ucsb.cs.mdcc.config.Member;
-import edu.ucsb.cs.mdcc.util.HBaseServer;
 import edu.ucsb.cs.mdcc.util.Utils;
 import edu.ucsb.cs.mdcc.util.ZKServer;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.*;
@@ -31,17 +31,17 @@ public abstract class Agent implements Watcher, AsyncCallback.ChildrenCallback, 
     private static final String ELECTION_NODE = "/ELECTION_";
 
     private ExecutorService zkService;
-    private HBaseServer hbaseServer;
+    //private HBaseServer hbaseServer;
     private ZooKeeper zkClient;
     private final Map<String,Member> leaders = new ConcurrentHashMap<String, Member>();
 
     public void start() {
-        Properties properties = new Properties();
-        String configPath = System.getProperty("mdcc.config.dir", "conf");
-        String dataPath = System.getProperty("mdcc.zk.dir", "zk");
+    	Properties properties = new Properties();
+        String configPath = System.getProperty("mdcc.config.dir", "conf");        
         File configFile = new File(configPath, "zk.properties");
-        try {
-            properties.load(new FileInputStream(configFile));
+        
+        /*try {
+            String dataPath = MDCCConfiguration.getConfiguration().getZkDir();
             int myId = MDCCConfiguration.getConfiguration().getMyId();
             Utils.incrementPort(properties, "clientPort", myId);
 
@@ -61,33 +61,48 @@ public abstract class Agent implements Watcher, AsyncCallback.ChildrenCallback, 
             handleException("Error loading the ZooKeeper configuration", e);
         } catch (QuorumPeerConfig.ConfigException e) {
             handleException("Error loading the ZooKeeper configuration", e);
-        }
+        }*/
 
-        String connection = "localhost:" + properties.getProperty("clientPort");
         try {
+        	properties.load(new FileInputStream(configFile));
+        	String connection = "localhost:" + properties.getProperty("clientPort");
             zkClient = new ZooKeeper(connection, 5000, this);
         } catch (IOException e) {
             handleException("Error initializing the ZooKeeper client", e);
         }
 
-        hbaseServer = new HBaseServer();
-        hbaseServer.start();
+        /*
+       	hbaseServer = new HBaseServer();
+       	hbaseServer.start();
         while (!hbaseServer.isInitialized()) {
             log.debug("Waiting for HBase server to initialize");
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException ignored) {
             }
-        }
+        }*/
     }
 
     public void stop() {
-        zkService.shutdownNow();
-        hbaseServer.stop();
+        //zkService.shutdownNow();
+        //hbaseServer.stop();
         System.out.println("Program terminated");
     }
 
     public Member findLeader(String key, boolean force) {
+    	/*if (!force && leaders.containsKey(key)) {
+            return leaders.get(key);
+        } else {
+            leaders.remove(key);
+        }
+        
+        Member[] members = AppServerConfiguration.getConfiguration().getMembers(key);
+        Member member=null;
+        for(Member m : members)
+        	if((member==null || m.getProcessId().compareTo(member.getProcessId())==-1))
+        		member = m;
+        leaders.put(key, member);*/
+        
         if (!force && leaders.containsKey(key)) {
             return leaders.get(key);
         } else {
@@ -113,8 +128,7 @@ public abstract class Agent implements Watcher, AsyncCallback.ChildrenCallback, 
         zkClient.getChildren(electionDir, true, this, null);
         String zNode = electionDir + "/" + config.getLocalMember().getProcessId() + "_";
         try {
-            zkClient.create(zNode, new byte[0],
-                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
+            zkClient.create(zNode, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
         } catch (Exception e) {
             handleFatalException("Failed to create z_node", e);
         }

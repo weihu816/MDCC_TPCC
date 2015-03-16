@@ -11,7 +11,7 @@ import java.util.concurrent.Future;
 
 public class FundsTransferTest {
 
-    public static final String ROOT = "ROOT";
+    public static final String ROOT = "test:ROOT:t";
     public static final String CHILD = "CHILD";
 
     public static void main(String[] args) throws TransactionException {
@@ -25,7 +25,7 @@ public class FundsTransferTest {
         t1.begin();
         t1.write(ROOT, toBytes(startingTotal));
         for (int i = 0; i < accounts; i++) {
-            t1.write(CHILD + i, toBytes(0));
+            t1.write("test:" +  CHILD + i + ":t", toBytes(0));
         }
         t1.commit();
         System.out.println("Transaction 1 completed...");
@@ -44,14 +44,14 @@ public class FundsTransferTest {
         System.out.println("ROOT = " + root);
         int[] children = new int[accounts];
         for (int i = 0; i < accounts; i++) {
-            int child = toInt(t2.read(CHILD + i));
+            int child = toInt(t2.read("test:" +  CHILD + i + ":t"));
             children[i] = child;
             System.out.println("CHILD" + i + " = " + child);
         }
 
         int fundsPerChild = root/accounts;
         for (int i = 0; i < accounts; i++) {
-            t2.write(CHILD + i, toBytes(children[i] + fundsPerChild));
+            t2.write("test:" +  CHILD + i + ":t", toBytes(children[i] + fundsPerChild));
             root -= fundsPerChild;
         }
         t2.write(ROOT, toBytes(root));
@@ -97,7 +97,7 @@ public class FundsTransferTest {
         children = new int[accounts];
         total += root;
         for (int i = 0; i < accounts; i++) {
-            int child = toInt(t4.read(CHILD + i));
+            int child = toInt(t4.read("test:" +  CHILD + i + ":t"));
             children[i] = child;
             total += child;
             System.out.println(CHILD + i + " = " + child);
@@ -139,11 +139,11 @@ public class FundsTransferTest {
                 t3.begin();
                 int root = toInt(t3.read(ROOT));
                 System.out.println("ROOT = " + root);
-                int child = toInt(t3.read(CHILD + index));
+                int child = toInt(t3.read("test:" +  CHILD + index + ":t"));
                 System.out.println(CHILD + index + " = " + child);
 
                 t3.write(ROOT, toBytes(root + child));
-                t3.write(CHILD + index, toBytes(0));
+                t3.write("test:" +  CHILD + index + ":t", toBytes(0));
                 t3.commit();
                 System.out.println("Transaction 3 completed by Thread-" + index);
             } catch (TransactionException e) {

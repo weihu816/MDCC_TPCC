@@ -24,7 +24,8 @@ public class TransactionFactory {
         }
     }
 
-    public Transaction create() {
+    //HUWEI
+    public MDCCTransaction create() {
     	return new MDCCTransaction(appServer);
     }
 

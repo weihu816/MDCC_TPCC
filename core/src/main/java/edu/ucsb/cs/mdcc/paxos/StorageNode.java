@@ -2,14 +2,16 @@ package edu.ucsb.cs.mdcc.paxos;
 
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 import edu.ucsb.cs.mdcc.Option;
 import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
 import edu.ucsb.cs.mdcc.config.Member;
 import edu.ucsb.cs.mdcc.dao.*;
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicator;
-
 import edu.ucsb.cs.mdcc.messaging.ReadValue;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -17,7 +19,7 @@ public class StorageNode extends Agent {
 
     private static final Log log = LogFactory.getLog(StorageNode.class);
 
-    private Database db = new CachedHBase();
+    private InMemoryDatabase db = new InMemoryDatabase();
 	private MDCCConfiguration config;
 
     private MDCCCommunicator communicator;
@@ -29,13 +31,14 @@ public class StorageNode extends Agent {
 
     @Override
     public void start() {
+    	db.init();
+    	(new Loader(db)).load();
         super.start();
-        db.init();
+        //
         int port = config.getLocalMember().getPort();
         communicator.startListener(this, port);
-
         //now we talk to everyone else to do recovery
-        runRecoveryPhase();
+        //runRecoveryPhase();
     }
 
     private void runRecoveryPhase() {
@@ -92,10 +95,8 @@ public class StorageNode extends Agent {
 
         synchronized (key.intern()) {
             Record record = db.get(key);
-            if (record.getOutstanding() != null &&
-                    !transaction.equals(record.getOutstanding())) {
-                log.warn("Outstanding option detected on " + key +
-                        " - Denying the new option (" + record.getOutstanding() + ")");
+            if (record.getOutstanding() != null && !transaction.equals(record.getOutstanding())) {
+                log.warn("Outstanding option detected on " + key + " - Denying the new option (" + record.getOutstanding() + ")");
                 synchronized (transaction.intern()) {
                     TransactionRecord txnRecord = db.getTransactionRecord(transaction);
                     Option option = new Option(key, value, record.getVersion(), false);
@@ -125,8 +126,7 @@ public class StorageNode extends Agent {
 
             long version = record.getVersion();
             //if it is a new insert
-            boolean success = (version == oldVersion) &&
-                    (ballot.isFastBallot() || ballot.compareTo(entryBallot) >= 0);
+            boolean success = (version == oldVersion) && (ballot.isFastBallot() || ballot.compareTo(entryBallot) >= 0);
 
             if (success) {
                 record.setOutstanding(transaction);
@@ -202,18 +202,79 @@ public class StorageNode extends Agent {
 
 	public ReadValue onRead(String key) {
         Record record = db.get(key);
-        return new ReadValue(record.getVersion(), record.getClassicEndVersion(),
+        // TODO : HUWEI + (record.getKey()
+        return new ReadValue(record.getKey(), record.getVersion(), record.getClassicEndVersion(),
                 ByteBuffer.wrap(record.getValue()));
     }
 
+	//-----------------------------
+	public Map<String, ReadValue> onRead(String table, String key, List<String> columns) {
+		Map<String, ReadValue> ret = new ConcurrentHashMap<String, ReadValue>();
+		Map<String, Record> records = db.read(table, key, columns);
+		for (Entry<String, Record> e: records.entrySet()) {
+			Record record = e.getValue();
+	        // TODO : HUWEI + (record.getKey()
+			ReadValue readvalue = new ReadValue(record.getKey(), record.getVersion(),
+					record.getClassicEndVersion(), ByteBuffer.wrap(record.getValue()));
+			ret.put(e.getKey(), readvalue);
+		}
+		return ret;
+	}
+	
+	public List<Map<String, ReadValue>> onRead(String table, String key_prefix,
+			List<String> columns, String constraintColumn,
+			String constraintValue, String orderColumn, boolean isAssending) {
+
+		List<Map<String, ReadValue>> ret = new ArrayList<Map<String, ReadValue>>();
+		List<Map<String, Record>> records = db.read(table, key_prefix, columns,
+				constraintColumn, constraintValue, orderColumn, isAssending);
+
+		for (Map<String, Record> column : records) {
+			Map<String, ReadValue> map = new ConcurrentHashMap<String, ReadValue>();
+			for (Entry<String, Record> e : column.entrySet()) {
+				Record record = e.getValue();
+		        // TODO : HUWEI + (record.getKey()
+				ReadValue readvalue = new ReadValue(record.getKey(), record.getVersion(),
+						record.getClassicEndVersion(), ByteBuffer.wrap(record.getValue()));
+				map.put(e.getKey(), readvalue);
+			}
+			ret.add(map);
+		}
+		return ret;
+		
+	}
+	
+	public List<ReadValue> onRead(String table, String key_prefix, String projectionColumn, String constraintColumn, long lowerBound,
+			long upperBound) {
+		List<ReadValue> ret = new ArrayList<ReadValue>();
+		List<Record> records = db.read(table, key_prefix, projectionColumn,
+				constraintColumn, lowerBound, upperBound);
+		for (Record record : records) {
+	        // TODO : HUWEI + (record.getKey()
+			ReadValue readvalue = new ReadValue(record.getKey(), record.getVersion(),
+					record.getClassicEndVersion(), ByteBuffer.wrap(record.getValue()));
+			ret.add(readvalue);
+		}
+		return ret;
+	}
+	
+	public Integer onRead(String table, String key_prefix, String constraintColumn,
+			long lowerBound, long upperBound) {
+		Integer ret = db.read(table, key_prefix, constraintColumn, lowerBound,
+				upperBound);
+		return ret;
+	}
+	//-----------------------------
+	
+	
 	public static void main(String[] args) {
         final StorageNode storageNode = new StorageNode();
-        Runtime.getRuntime().addShutdownHook(new Thread() {
+        /*Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
                 storageNode.stop();
             }
-        });
+        });*/
         storageNode.start();
 	}
 
@@ -243,7 +304,8 @@ public class StorageNode extends Agent {
         for (Record record : records) {
             if (!versions.containsKey(record.getKey()) ||
                     (record.getVersion() > versions.get(record.getKey()))) {
-                ReadValue readValue = new ReadValue(record.getVersion(),
+                // TODO : HUWEI + (record.getKey()
+                ReadValue readValue = new ReadValue(record.getKey(), record.getVersion(),
                         record.getClassicEndVersion(), ByteBuffer.wrap(record.getValue()));
                 newVersions.put(record.getKey(), readValue);
             }

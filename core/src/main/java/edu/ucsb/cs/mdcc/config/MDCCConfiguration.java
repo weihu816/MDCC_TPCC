@@ -18,17 +18,21 @@ public class MDCCConfiguration {
 	private static final Log log = LogFactory.getLog(MDCCConfiguration.class);
 
 	private static volatile MDCCConfiguration config = null;
-
+	
     private Member[] members;
     private int myId = 0;
+	private String zookeeperDir;
 	
 	private MDCCConfiguration(Properties properties) {
-        String myIdValue = System.getProperty("mdcc.my.id");
+        //String myIdValue = System.getProperty("mdcc.my.id");
+		String myIdValue = properties.getProperty("mdcc.my.id");
         if (myIdValue != null) {
             myId = Integer.parseInt(myIdValue);
         }
 
-		File zkDir = new File(System.getProperty("mdcc.zk.dir"));
+		//File zkDir = new File(System.getProperty("mdcc.zk.dir"));
+        setZkDir(properties.getProperty("mdcc.zk.dir"));
+        File zkDir = new File(properties.getProperty("mdcc.zk.dir"));
         File myIdFile = new File(zkDir, "myid");
         try {
             if (log.isDebugEnabled()) {
@@ -100,5 +104,13 @@ public class MDCCConfiguration {
     public int getMyId() {
         return myId;
     }
+
+	public String getZkDir() {
+		return zookeeperDir;
+	}
+
+	public void setZkDir(String zookeeperDir) {
+		this.zookeeperDir = zookeeperDir;
+	}
 
 }

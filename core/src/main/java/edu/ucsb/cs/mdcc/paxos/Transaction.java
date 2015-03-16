@@ -5,6 +5,7 @@ import edu.ucsb.cs.mdcc.Result;
 import edu.ucsb.cs.mdcc.dao.Database;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 public abstract class Transaction {
 
@@ -67,8 +68,7 @@ public abstract class Transaction {
                 throw new TransactionException("Object already deleted: " + key);
             }
             result.setDeleted(true);
-            option = new Option(key, Database.DELETE_VALUE,
-                    result.getVersion(), result.isClassic());
+            option = new Option(key, Database.DELETE_VALUE, result.getVersion(), result.isClassic());
         } else {
             result = doRead(key);
             if (result == null) {
@@ -93,21 +93,13 @@ public abstract class Transaction {
         Option option;
         Result result = readSet.get(key);
         if (result != null) {
-            // We have already read this object.
-            // Update the value in the read-set so future reads can see this write.
             option = new Option(key, data, result.getVersion(), result.isClassic());
             result.setValue(data);
         } else {
-            // We haven't read this object before (blind write).
-            // Do an implicit read from the database.
             result = doRead(key);
             if (result == null) {
-                // Object doesn't exist in the DB - Insert (version = 0)
                 result = new Result(key, data, (long) 0, false);
             } else {
-                // Object exists in the DB.
-                // Update the value and add to the read-set so future reads can
-                // see this write.
                 result.setValue(data);
             }
             option = new Option(key, data, result.getVersion(), result.isClassic());
@@ -137,6 +129,19 @@ public abstract class Transaction {
 
     protected abstract Result doRead(String key);
 
+    // HUWEI
+    protected abstract Map<String, Result> doRead(String table, String column, List<String> columns);
+
+    protected abstract List<Map<String, Result>> doRead(String table, String key_prefix,
+ 			List<String> columns, String constraintColumn, String constraintValue,
+ 			String orderColumn, boolean isAssending);
+
+    protected abstract List<Result> doRead(String table, String key_prefix,
+ 			String projectionColumn, String constraintColumn, int lowerBound, int upperBound);
+ 	
+	protected abstract Integer doRead(String table, String key_prefix,
+			String constraintColumn, int lowerBound, int upperBound);
+ 	
     protected abstract void doCommit(String transactionId,
                                      Collection<Option> options) throws TransactionException;
 

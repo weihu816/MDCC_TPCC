@@ -1,0 +1,11 @@
+ INFO [pool-1-thread-1] 2015-03-16 10:25:02,404 TestTPCC.java (line 140) [[[0]]] Running ***Plain*** TPCC Transactions for 8 seconds
+ INFO [pool-1-thread-3] 2015-03-16 10:25:02,404 TestTPCC.java (line 140) [[[2]]] Running ***Plain*** TPCC Transactions for 8 seconds
+ INFO [pool-1-thread-2] 2015-03-16 10:25:02,404 TestTPCC.java (line 140) [[[1]]] Running ***Plain*** TPCC Transactions for 8 seconds
+ INFO [pool-1-thread-1] 2015-03-16 10:25:10,448 TestTPCC.java (line 204) [[[0]]] runs {{{65}}} TPCC Transactions for 8 seconds
+ INFO [pool-1-thread-1] 2015-03-16 10:25:10,449 TestTPCC.java (line 205) [[[0]]] times of retry {{{0}}}
+ INFO [pool-1-thread-2] 2015-03-16 10:25:10,469 TestTPCC.java (line 204) [[[1]]] runs {{{50}}} TPCC Transactions for 8 seconds
+ INFO [pool-1-thread-2] 2015-03-16 10:25:10,470 TestTPCC.java (line 205) [[[1]]] times of retry {{{0}}}
+ INFO [main] 2015-03-16 10:25:10,473 TestTPCC.java (line 55) =======[[[2]]]======
+ INFO [main] 2015-03-16 10:25:10,476 TestTPCC.java (line 64) ==============================Result==============================
+ INFO [main] 2015-03-16 10:25:10,477 TestTPCC.java (line 65) 115 ***Plain*** Transactions finished in 8 seconds with 3 terminals
+ INFO [main] 2015-03-16 10:25:10,478 TestTPCC.java (line 68) ==================================================================

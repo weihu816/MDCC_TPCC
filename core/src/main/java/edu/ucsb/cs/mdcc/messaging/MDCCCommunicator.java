@@ -111,10 +111,7 @@ public class MDCCCommunicator {
             callback = new AsyncMethodCallbackDecorator(voting, socket, member, nonBlockingPool);
             TBinaryProtocol.Factory protocolFactory = new TBinaryProtocol.Factory();
             MDCCCommunicationService.AsyncClient client =
-                    new MDCCCommunicationService.AsyncClient(
-                            protocolFactory,
-                            clientManager,
-                            socket);
+                    new MDCCCommunicationService.AsyncClient(protocolFactory, clientManager, socket);
             client.accept(toThriftAccept(accept), callback);
         } catch (Exception e) {
             if (callback != null) {
@@ -133,15 +130,12 @@ public class MDCCCommunicator {
             callback = new AsyncMethodCallbackDecorator(fastCallback, socket, member, nonBlockingPool);
             TBinaryProtocol.Factory protocolFactory = new TBinaryProtocol.Factory();
             MDCCCommunicationService.AsyncClient client =
-                    new MDCCCommunicationService.AsyncClient(
-                            protocolFactory,
-                            clientManager,
-                            socket);
+                    new MDCCCommunicationService.AsyncClient(protocolFactory, clientManager, socket);
             ArrayList<edu.ucsb.cs.mdcc.messaging.Accept> tAccepts = new ArrayList<Accept>(fastAccepts.size());
             for (edu.ucsb.cs.mdcc.paxos.Accept accept : fastAccepts) {
             	tAccepts.add(toThriftAccept(accept));
             }
-            client.bulkAccept( tAccepts, callback);
+            client.bulkAccept(tAccepts, callback);
         } catch (Exception e) {
             if (callback != null) {
                 callback.onError(e);
@@ -159,8 +153,7 @@ public class MDCCCommunicator {
             callback = new AsyncMethodCallbackDecorator(voting, socket, member, nonBlockingPool);
             TBinaryProtocol.Factory protocolFactory = new TBinaryProtocol.Factory();
             MDCCCommunicationService.AsyncClient client =
-                    new MDCCCommunicationService.AsyncClient(protocolFactory,
-                            clientManager, socket);
+                    new MDCCCommunicationService.AsyncClient(protocolFactory, clientManager, socket);
             client.prepare(prepare.getKey(), toThriftBallot(prepare.getBallotNumber()),
                     prepare.getClassicEndVersion(), callback);
         } catch (Exception e) {
@@ -194,8 +187,7 @@ public class MDCCCommunicator {
             callback = new AsyncMethodCallbackDecorator(socket, member, nonBlockingPool);
             TBinaryProtocol.Factory protocolFactory = new TBinaryProtocol.Factory();
             MDCCCommunicationService.AsyncClient client =
-                    new MDCCCommunicationService.AsyncClient(protocolFactory,
-                            clientManager, socket);
+                    new MDCCCommunicationService.AsyncClient(protocolFactory, clientManager, socket);
             client.decide(transaction, commit, callback);
         } catch (Exception e) {
             if (callback != null) {
@@ -231,6 +223,129 @@ public class MDCCCommunicator {
             }
         }
 	}
+	
+	//-----------------------------
+	public Map<String, ReadValue> get(Member member, String table, String column, List<String> columns) {
+        TTransport transport = null;
+        boolean error = false;
+        try {
+            transport = blockingPool.borrowObject(member);
+            TProtocol protocol = new TBinaryProtocol(transport);
+            MDCCCommunicationService.Client client = new MDCCCommunicationService.Client(protocol);
+            Map<String, ReadValue> r = client.read2(table, column, columns);
+            if (r.size() == 0) {
+            	return null;
+            }
+            return r;
+        } catch (Exception e) {
+            error = true;
+            handleException(member.getHostName(), e);
+            return null;
+        } finally {
+            if (transport != null) {
+                try {
+                    if (error) {
+                        blockingPool.invalidateObject(member, transport);
+                    } else {
+                        blockingPool.returnObject(member, transport);
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+        }
+	}
+	
+	public List<Map<String, ReadValue>> get(Member member,String table, String key_prefix,
+			List<String> columns, String constraintColumn,
+			String constraintValue, String orderColumn, boolean isAssending) {
+        TTransport transport = null;
+        boolean error = false;
+        try {
+            transport = blockingPool.borrowObject(member);
+            TProtocol protocol = new TBinaryProtocol(transport);
+            MDCCCommunicationService.Client client = new MDCCCommunicationService.Client(protocol);
+            List<Map<String, ReadValue>> r = client.read3(table, key_prefix, columns, constraintColumn, constraintValue, orderColumn, isAssending);
+            if (r.size() == 0) {
+            	return null;
+            }
+            return r;
+        } catch (Exception e) {
+            error = true;
+            handleException(member.getHostName(), e);
+            return null;
+        } finally {
+            if (transport != null) {
+                try {
+                    if (error) {
+                        blockingPool.invalidateObject(member, transport);
+                    } else {
+                        blockingPool.returnObject(member, transport);
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+        }
+	}
+	
+	public List<ReadValue> get(Member member, String table, String key_prefix,
+			String projectionColumn, String constraintColumn, int lowerBound,
+			int upperBound) {
+        TTransport transport = null;
+        boolean error = false;
+        try {
+            transport = blockingPool.borrowObject(member);
+            TProtocol protocol = new TBinaryProtocol(transport);
+            MDCCCommunicationService.Client client = new MDCCCommunicationService.Client(protocol);
+            List<ReadValue> r = client.read4(table, key_prefix, projectionColumn, constraintColumn, lowerBound, upperBound);
+            if (r.size() == 0) return null;
+            return r;
+        } catch (Exception e) {
+            error = true;
+            handleException(member.getHostName(), e);
+            return null;
+        } finally {
+            if (transport != null) {
+                try {
+                    if (error) {
+                        blockingPool.invalidateObject(member, transport);
+                    } else {
+                        blockingPool.returnObject(member, transport);
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+        }
+	}
+	
+	public Integer get(Member member, String table, String key_prefix,
+			String constraintColumn, int lowerBound, int upperBound) {
+        TTransport transport = null;
+        boolean error = false;
+        try {
+            transport = blockingPool.borrowObject(member);
+            TProtocol protocol = new TBinaryProtocol(transport);
+            MDCCCommunicationService.Client client = new MDCCCommunicationService.Client(protocol);
+            Integer r = client.read5(table, key_prefix, constraintColumn, lowerBound, upperBound);
+            return r;
+        } catch (Exception e) {
+            error = true;
+            handleException(member.getHostName(), e);
+            return null;
+        } finally {
+            if (transport != null) {
+                try {
+                    if (error) {
+                        blockingPool.invalidateObject(member, transport);
+                    } else {
+                        blockingPool.returnObject(member, transport);
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+        }
+	}
+	//-----------------------------
+
 	
 	private void handleException(String target, Exception e) {
         String msg = "Error contacting the remote member: " + target;

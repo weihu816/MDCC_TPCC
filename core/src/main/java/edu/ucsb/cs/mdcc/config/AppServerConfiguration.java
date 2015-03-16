@@ -28,8 +28,7 @@ public class AppServerConfiguration {
                 String value = properties.getProperty(property);
                 String processId = property.substring(property.lastIndexOf('.') + 1);
                 String[] connection = value.split(":");
-                Member member = new Member(connection[0],
-                        Integer.parseInt(connection[1]), processId, false);
+                Member member = new Member(connection[0], Integer.parseInt(connection[1]), processId, false);
                 List<Member> temp = tempMembers.get(shardId);
                 if (temp == null) {
                     temp = new ArrayList<Member>();

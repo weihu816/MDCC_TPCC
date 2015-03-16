@@ -113,8 +113,7 @@ public class FastPaxosVoteListener implements VoteResultListener {
                 Member[] members = AppServerConfiguration.getConfiguration().getMembers(option.getKey());
                 ClassicPaxosResultObserver observer = new ClassicPaxosResultObserver(option, this);
                 for (Member member : members) {
-                    if (communicator.runClassicPaxos(member, txnId,
-                            option, observer)) {
+                    if (communicator.runClassicPaxos(member, txnId, option, observer)) {
                         return;
                     }
                 }
