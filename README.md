@@ -57,9 +57,18 @@ Start appServer
 ---
 	$ java -classpath core/target/mdcc-tpcc-1.0.jar:lib/* edu.ucsb.cs.mdcc.paxos.AppServer
 
+Run <StorageNode.java>
+---
+For each node, modify mdcc.properities file, and
+
+	$ java -classpath core/target/mdcc-tpcc-1.0.jar:lib/* edu.ucsb.cs.mdcc.paxos.StorageNode
+	
 Run <TPCCTest.java>
 ---
-	$ java -classpath core/target/mdcc-tpcc-1.0.jar:lib/* edu.ucsb.cs.mdcc.paxos.StorageNode
+Modify tpcc.properities file, and
+
+	$ java -classpath core/target/mdcc-tpcc-1.0.jar:lib/* edu.ucsb.cs.mdcc.txn.TestTPCC
+	
 [time in seconds] 在tpcc.properties 里面设置 单位是秒
 [number of warehouses] 在tpcc.properties 里面设置 单位是个
 warehouse=1
@@ -70,6 +79,4 @@ Result
 the number of a mix of TPCC transactions running in the given time
 Example output:
 Running TPCC Transactions for 60 seconds
-==============================Result==============================
 1565 Transactions finished in 60 seconds
-==================================================================
